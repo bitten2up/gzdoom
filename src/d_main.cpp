@@ -1997,8 +1997,6 @@ static void AddAutoloadFiles(const char *autoname, std::vector<std::string>& all
 {
 	LumpFilterIWAD.Format("%s.", autoname);	// The '.' is appened to simplify parsing the string 
 
-	const char *srb2wad = BaseFileSearch ("srb2.pk3", NULL, true, GameConfig);
-	D_AddFile(allwads, srb2wad, true, -1, GameConfig)
 	const char *zoneswad = BaseFileSearch ("zones.pk3", NULL, true, GameConfig);
 	D_AddFile(allwads, zoneswad, true, -1, GameConfig)
 

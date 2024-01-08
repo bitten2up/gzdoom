@@ -1,3 +1,5 @@
+#define SRB2VERSION "2.2.14"/* this must be the first line, for cmake !! */
+
 /*
 ** version.h
 **
@@ -81,7 +83,7 @@ const char *GetVersionString();
 // SAVESIG should match SAVEVER.
 
 // extension for savegames
-#define SAVEGAME_EXT "zds"
+#define SAVEGAME_EXT "ssg"
 
 // MINSAVEVER is the minimum level snapshot version that can be loaded.
 #define MINSAVEVER 4556
@@ -91,18 +93,18 @@ const char *GetVersionString();
 #define SAVEVER 4560
 
 // This is so that derivates can use the same savegame versions without worrying about engine compatibility
-#define GAMESIG "GZDOOM"
-#define BASEWAD "gzdoom.pk3"
+#define GAMESIG "SRB2"
+#define BASEWAD "srb2.pk3"
 #define OPTIONALWAD "game_support.pk3"
 #define GZDOOM 1
 #define VR3D_ENABLED
 
 // More stuff that needs to be different for derivatives.
-#define GAMENAME "GZDoom"
-#define WGAMENAME L"GZDoom"
-#define GAMENAMELOWERCASE "gzdoom"
-#define FORUM_URL "http://forum.zdoom.org/"
-#define BUGS_FORUM_URL	"http://forum.zdoom.org/viewforum.php?f=2"
+#define GAMENAME "SRB2"
+#define WGAMENAME L"SRB2"
+#define GAMENAMELOWERCASE "srb2"
+#define FORUM_URL "http://mb.srb2.org/"
+#define BUGS_FORUM_URL	"https://github.com/bitten2up/gzdoom"
 
 #if defined(__APPLE__) || defined(_WIN32)
 #define GAME_DIR GAMENAME
