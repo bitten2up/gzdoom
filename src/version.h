@@ -96,7 +96,7 @@ const char *GetVersionString();
 #define GAMESIG "SRB2"
 #define BASEWAD "srb2.pk3"
 #define OPTIONALWAD "game_support.pk3"
-#define GZDOOM 1
+#define GZDOOM 0
 #define VR3D_ENABLED
 
 // More stuff that needs to be different for derivatives.
