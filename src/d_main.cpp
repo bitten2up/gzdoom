@@ -1998,7 +1998,7 @@ static void AddAutoloadFiles(const char *autoname, std::vector<std::string>& all
 	LumpFilterIWAD.Format("%s.", autoname);	// The '.' is appened to simplify parsing the string 
 
 	const char *zoneswad = BaseFileSearch ("zones.pk3", NULL, true, GameConfig);
-	D_AddFile(allwads, zoneswad, true, -1, GameConfig)
+	D_AddFile(allwads, zoneswad, true, -1, GameConfig);
 
 	// [SP] Dialog reaction - load lights.pk3 and brightmaps.pk3 based on user choices
 	if (!(gameinfo.flags & GI_SHAREWARE) && !(Args->CheckParm("-noextras")))
