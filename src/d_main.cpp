@@ -2644,7 +2644,7 @@ int StrTable_GetGender()
 bool StrTable_ValidFilter(const char* str)
 {
 	if (gameinfo.gametype == GAME_Strife && (gameinfo.flags & GI_SHAREWARE) && !stricmp(str, "strifeteaser")) return true;
-	return stricmp(str, GameNames[gameinfo.gametype]) == 0;
+	return gameinfo.gametype == 0 || stricmp(str, GameNames[gameinfo.gametype]) == 0;
 }
 
 bool System_WantGuiCapture()
@@ -3241,8 +3241,8 @@ static int D_InitGame(const FIWADInfo* iwad_info, std::vector<std::string>& allw
 		exec = NULL;
 	}
 
-	// [RH] Initialize localizable strings.
-	GStrings.LoadStrings (language);
+	// [RH] Initialize localizable strings. 
+	GStrings.LoadStrings(fileSystem, language);
 
 	V_InitFontColors ();
 

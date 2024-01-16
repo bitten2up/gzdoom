@@ -507,7 +507,7 @@ bool HWSprite::CalculateVertices(HWDrawInfo *di, FVector3 *v, DVector3 *vp)
 inline void HWSprite::PutSprite(HWDrawInfo *di, bool translucent)
 {
 	// That's a lot of checks...
-	if (modelframe && !modelframe->isVoxel && !(modelframe->flags & MDL_NOPERPIXELLIGHTING) && RenderStyle.BlendOp != STYLEOP_Shadow && gl_light_sprites && di->Level->HasDynamicLights && !di->isFullbrightScene() && !fullbright)
+	if (modelframe && !modelframe->isVoxel && !(modelframeflags & MDL_NOPERPIXELLIGHTING) && RenderStyle.BlendOp != STYLEOP_Shadow && gl_light_sprites && di->Level->HasDynamicLights && !di->isFullbrightScene() && !fullbright)
 	{
 		hw_GetDynModelLight(actor, lightdata);
 		dynlightindex = screen->mLights->UploadLights(lightdata);
@@ -797,6 +797,7 @@ void HWSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 	}
 
 	modelframe = isPicnumOverride ? nullptr : FindModelFrame(thing, spritenum, thing->frame, !!(thing->flags & MF_DROPPED));
+	modelframeflags = modelframe ? modelframe->getFlags(thing->modelData) : 0;
 
 	// Too close to the camera. This doesn't look good if it is a sprite.
 	if (fabs(thingpos.X - vp.Pos.X) < 2 && fabs(thingpos.Y - vp.Pos.Y) < 2
@@ -1283,13 +1284,13 @@ void HWSprite::ProcessParticle(HWDrawInfo *di, particle_t *particle, sector_t *s
 	index = 0;
 	actor = nullptr;
 	this->particle = particle;
-	fullbright = particle->bright;
+	fullbright = particle->flags & SPF_FULLBRIGHT;
 
 	if (di->isFullbrightScene()) 
 	{
 		Colormap.Clear();
 	}
-	else if (!particle->bright)
+	else if (!(particle->flags & SPF_FULLBRIGHT))
 	{
 		TArray<lightlist_t> & lightlist=sector->e->XFloor.lightlist;
 		double lightbottom;
@@ -1332,12 +1333,19 @@ void HWSprite::ProcessParticle(HWDrawInfo *di, particle_t *particle, sector_t *s
 	ThingColor.a = 255;
 	const auto& vp = di->Viewpoint;
 
+	double timefrac = vp.TicFrac;
+	if (paused || (di->Level->isFrozen() && !(particle->flags & SPF_NOTIMEFREEZE)))
+		timefrac = 0.;
+
 	if (spr)
+	{
 		AdjustVisualThinker(di, spr, sector);
+	}
 	else
 	{
-		bool has_texture = !particle->texture.isNull();
-
+		bool has_texture = particle->texture.isValid();
+		bool custom_animated_texture = (particle->flags & SPF_LOCAL_ANIM) && particle->animData.ok;
+		
 		int particle_style = has_texture ? 2 : gl_particles_style; // Treat custom texture the same as smooth particles
 
 		// [BB] Load the texture for round or smooth particles
@@ -1350,27 +1358,36 @@ void HWSprite::ProcessParticle(HWDrawInfo *di, particle_t *particle, sector_t *s
 			}
 			else if (particle_style == 2)
 			{
-				lump = has_texture ? particle->texture : TexMan.glPart;
+				if(custom_animated_texture)
+				{
+					lump = TexAnim.UpdateStandaloneAnimation(particle->animData, di->Level->maptime + timefrac);
+				}
+				else if(has_texture)
+				{
+					lump = particle->texture;
+				}
+				else
+				{
+					lump = TexMan.glPart;
+				}
 			}
-			else lump.SetNull();
+			else
+			{
+				lump.SetNull();
+			}
 
-		if (lump.isValid())
-		{
-			translation = NO_TRANSLATION;
-			//auto tex = TexMan.GetGameTexture(lump, false);
+			if (lump.isValid())
+			{
+				translation = NO_TRANSLATION;
 
-				ul = 0;
-				ur = 1;
-				vt = 0;
-				vb = 1;
-				texture = TexMan.GetGameTexture(lump, true);
+				ul = vt = 0;
+				ur = vb = 1;
+
+				texture = TexMan.GetGameTexture(lump, !custom_animated_texture);
 			}
 		}
 
-		
-		double timefrac = vp.TicFrac;
-		if (paused || di->Level->isFrozen())
-			timefrac = 0.;
+
 		float xvf = (particle->Vel.X) * timefrac;
 		float yvf = (particle->Vel.Y) * timefrac;
 		float zvf = (particle->Vel.Z) * timefrac;
@@ -1426,11 +1443,21 @@ void HWSprite::ProcessParticle(HWDrawInfo *di, particle_t *particle, sector_t *s
 void HWSprite::AdjustVisualThinker(HWDrawInfo* di, DVisualThinker* spr, sector_t* sector)
 {
 	translation = spr->Translation;
-	texture = TexMan.GetGameTexture(spr->PT.texture, true);
 
 	const auto& vp = di->Viewpoint;
 	double timefrac = vp.TicFrac;
-	if (paused || spr->isFrozen() || spr->bDontInterpolate)
+
+	if (paused || spr->isFrozen())
+		timefrac = 0.;
+	
+	bool custom_anim = ((spr->PT.flags & SPF_LOCAL_ANIM) && spr->PT.animData.ok);
+
+	texture = TexMan.GetGameTexture(
+			custom_anim
+			? TexAnim.UpdateStandaloneAnimation(spr->PT.animData, di->Level->maptime + timefrac)
+			: spr->PT.texture, !custom_anim);
+
+	if (spr->bDontInterpolate)
 		timefrac = 0.;
 
 	FVector3 interp = spr->InterpolatedPosition(timefrac);
